@@ -11,9 +11,6 @@ export const iconVariants = tv({
       md: 'size-5', // 20px
       lg: 'size-6', // 24px
       xl: 'size-8', // 32px
-      // Internal "unset" option (not part of the public API, see IconProps).
-      // Emits no size class, so SVG width/height attributes become the only source of size.
-      custom: '',
     },
     color: {
       primary: 'text-blue-600',
@@ -23,8 +20,10 @@ export const iconVariants = tv({
       current: 'text-current',
     },
   },
+  // size has no default here on purpose: an omitted/undefined size must
+  // emit no class at all when `customSize` is set. The component below
+  // supplies the default size itself instead.
   defaultVariants: {
-    size: 'sm',
     color: 'current',
   },
 });
@@ -35,8 +34,8 @@ export type IconName = keyof typeof LucideIcons;
 
 export interface IconProps extends Omit<IconVariantProps, 'size'> {
   name: IconName;
-  /** Preset size. Ignored when `customSize` is provided. */
-  size?: Exclude<IconVariantProps['size'], 'custom'>;
+  /** Preset size. Ignored when `customSize` is provided. @default 'sm' */
+  size?: IconVariantProps['size'];
   className?: string;
   strokeWidth?: number;
   /** Arbitrary size in px (applied to SVG width/height). Takes precedence over `size`. */
@@ -45,24 +44,23 @@ export interface IconProps extends Omit<IconVariantProps, 'size'> {
 
 export const Icon = ({
   name,
-  size,
+  size = 'sm',
   color,
   className,
   strokeWidth = 2,
   customSize,
 }: IconProps) => {
-  // Lucide types their exports as LucideIcon
   const IconComponent = LucideIcons[name] as LucideIcons.LucideIcon;
   const hasCustomSize = customSize !== undefined;
 
   return (
     <IconComponent
       // Lucide maps `size` to the SVG width/height attributes.
-      // CSS classes beat presentation attributes, so the size class must be dropped
-      // (see the `custom` variant) or it would silently override this value.
+      // CSS classes beat presentation attributes, so the size class must be
+      // omitted (size: undefined, below) or it would silently override this value.
       size={customSize}
       className={iconVariants({
-        size: hasCustomSize ? 'custom' : size,
+        size: hasCustomSize ? undefined : size,
         color,
         className,
       })}
